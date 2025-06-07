@@ -9,14 +9,9 @@ export async function GET() {
       return NextResponse.json({ error: "No active challenge" }, { status: 404 })
     }
 
-    const challengeWithImageUrl = {
-      ...challenge,
-      image: `/api/images/${challenge.image}`
-    }
-
     const leaderboard = await db.getLeaderboard()
 
-    return NextResponse.json({ challenge: challengeWithImageUrl, leaderboard })
+    return NextResponse.json({ challenge, leaderboard })
   } catch (error) {
     console.error("Error getting challenge:", error)
     return NextResponse.json(

@@ -4,39 +4,20 @@ export const runtime = 'edge';
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ filename: string }> }
+  { params }: { params: { filename: string } }
 ) {
   try {
-    const { filename } = await context.params;
-    
+    const filename = params.filename;
     if (!filename) {
       return new NextResponse('Filename is required', { status: 400 });
     }
 
-    // Get the image from the public directory
-    const imageUrl = new URL(`/images/${filename}`, request.url);
-    const response = await fetch(imageUrl);
-
-    if (!response.ok) {
-      console.error('Image not found:', imageUrl.toString());
-      return new NextResponse('Image not found', { status: 404 });
-    }
-
-    const contentType = getContentType(filename);
-    const imageBuffer = await response.arrayBuffer();
-
-    return new NextResponse(imageBuffer, {
-      headers: {
-        'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=31536000',
-      },
-    });
+    // Since we're now using Vercel Blob Storage, we don't need to serve images directly
+    // The image URLs are already public and accessible
+    return new NextResponse('Images are served directly from Vercel Blob Storage', { status: 200 });
   } catch (error) {
-    console.error('Error in image route:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Error serving image:', error);
+    return new NextResponse('Error serving image', { status: 500 });
   }
 }
 

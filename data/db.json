@@ -101,7 +101,27 @@
       "image": "1749325211971.jpg",
       "answer": "ddd",
       "guesses": []
+    },
+    {
+      "id": "1749326164444",
+      "image": "https://ynmwajtrj5hrsgzr.public.blob.vercel-storage.com/1749326164021.jpg",
+      "answer": "מת",
+      "guesses": [
+        {
+          "idNumber": "9355543",
+          "name": "ליאור קור",
+          "guess": "מת",
+          "timestamp": "2025-06-07T19:57:01.448Z",
+          "isCorrect": true
+        }
+      ]
+    },
+    {
+      "id": "1749326230039",
+      "image": "https://ynmwajtrj5hrsgzr.public.blob.vercel-storage.com/1749326229306.jpg",
+      "answer": "מתתת",
+      "guesses": []
     }
   ],
-  "activeChallengeId": "1749325211972"
+  "activeChallengeId": "1749326230039"
 }

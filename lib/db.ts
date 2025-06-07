@@ -1,6 +1,7 @@
 import { join } from "path"
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs"
 import { writeFile as writeFileAsync } from "fs/promises"
+import { put, del } from '@vercel/blob';
 
 interface Guess {
   idNumber: string
@@ -42,21 +43,16 @@ export interface IDatabase {
 class JsonDatabase implements IDatabase {
   private readonly dataDir: string
   private readonly dataPath: string
-  private readonly imagesDir: string
   private data: Database
 
   constructor() {
     this.dataDir = join(process.cwd(), "data")
     this.dataPath = join(this.dataDir, "db.json")
     console.log('Database path:', this.dataPath);
-    this.imagesDir = join(process.cwd(), "public", "images")
     
-    // Create data and images directories if they don't exist
+    // Create data directory if it doesn't exist
     if (!existsSync(this.dataDir)) {
       mkdirSync(this.dataDir, { recursive: true })
-    }
-    if (!existsSync(this.imagesDir)) {
-      mkdirSync(this.imagesDir, { recursive: true })
     }
 
     // Initialize data
@@ -103,13 +99,16 @@ class JsonDatabase implements IDatabase {
 
   async createChallenge(image: File, answer: string): Promise<Challenge> {
     const filename = `${Date.now()}.jpg`
-    const imagePath = join(this.imagesDir, filename)
-    const buffer = Buffer.from(await image.arrayBuffer())
-    await writeFileAsync(imagePath, buffer)
+    
+    // Upload image to Vercel Blob Storage
+    const { url } = await put(filename, image, {
+      access: 'public',
+      addRandomSuffix: false,
+    });
 
     const challenge = {
       id: Date.now().toString(),
-      image: filename,
+      image: url, // Store the full URL instead of just the filename
       answer,
       guesses: []
     }
@@ -196,6 +195,15 @@ class JsonDatabase implements IDatabase {
   }
 
   async eraseAllData(): Promise<void> {
+    // Delete all images from Vercel Blob Storage
+    for (const challenge of this.data.challenges) {
+      try {
+        await del(challenge.image);
+      } catch (error) {
+        console.error('Error deleting image:', error);
+      }
+    }
+
     this.data = {
       challenges: [],
       activeChallengeId: null
