@@ -12,12 +12,14 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { theme } = useTheme();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     try {
       const response = await fetch('/api/auth', {
@@ -26,17 +28,22 @@ export default function Login() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ username, password }),
+        credentials: 'include', // Important for cookies
       });
 
       const data = await response.json();
 
       if (data.success) {
-        router.push("/panel");
+        // Force a hard navigation to ensure the cookie is properly set
+        window.location.href = "/panel";
       } else {
-        setError("שם משתמש או סיסמה שגויים");
+        setError(data.message || "שם משתמש או סיסמה שגויים");
       }
     } catch (error) {
+      console.error('Login error:', error);
       setError("שגיאה בהתחברות. אנא נסה שוב.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -63,6 +70,7 @@ export default function Login() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="text-center"
+                  disabled={isLoading}
                 />
                 <Input
                   id="password"
@@ -71,11 +79,12 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="text-center"
+                  disabled={isLoading}
                 />
                 {error && <p className="text-red-500 text-sm">{error}</p>}
               </div>
-              <Button type="submit" className="w-full">
-                התחבר
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "מתחבר..." : "התחבר"}
               </Button>
             </form>
           </CardContent>
