@@ -12,7 +12,6 @@ import { VelocityScroll } from "@/components/magicui/scroll-based-velocity";
 import { MagicCard } from "@/components/magicui/magic-card";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Leaderboard } from "@/components/leaderboard";
 import { validateAndSanitize } from '@/lib/security';
 
