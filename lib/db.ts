@@ -1,7 +1,5 @@
-import { join } from "path"
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs"
-import { writeFile as writeFileAsync } from "fs/promises"
 import { put, del } from '@vercel/blob';
+import { createClient } from '@vercel/edge-config';
 
 interface Guess {
   idNumber: string
@@ -40,61 +38,47 @@ export interface IDatabase {
   eraseAllData(): Promise<void>
 }
 
-class JsonDatabase implements IDatabase {
-  private readonly dataDir: string
-  private readonly dataPath: string
-  private data: Database
+class EdgeConfigDatabase implements IDatabase {
+  private config: ReturnType<typeof createClient>;
 
   constructor() {
-    this.dataDir = join(process.cwd(), "data")
-    this.dataPath = join(this.dataDir, "db.json")
-    console.log('Database path:', this.dataPath);
-    
-    // Create data directory if it doesn't exist
-    if (!existsSync(this.dataDir)) {
-      mkdirSync(this.dataDir, { recursive: true })
+    if (!process.env.EDGE_CONFIG) {
+      throw new Error('EDGE_CONFIG environment variable is not set');
     }
-
-    // Initialize data
-    this.data = {
-      challenges: [],
-      activeChallengeId: null
-    }
-
-    // Load data if exists
-    this.loadData()
-    console.log('Initial database state:', this.data);
+    this.config = createClient(process.env.EDGE_CONFIG);
   }
 
-  private loadData() {
+  private async getData(): Promise<Database> {
+    const data = await this.config.get<string>('challenges');
+    if (!data) return { challenges: [], activeChallengeId: null };
     try {
-      console.log('Loading data from:', this.dataPath);
-      const data = readFileSync(this.dataPath, "utf-8")
-      console.log('Raw data from file:', data);
-      const parsedData = JSON.parse(data) as Database
-      console.log('Parsed data:', parsedData);
-      
-      // Validate data structure
-      if (!parsedData.challenges || !Array.isArray(parsedData.challenges)) {
-        console.error('Invalid data structure: challenges is not an array');
-        throw new Error("Invalid data structure")
-      }
-      
-      this.data = parsedData
-      console.log('Data loaded successfully');
+      return JSON.parse(data);
     } catch (error) {
-      console.error('Error loading db.json:', error)
-      // Initialize with empty data if file doesn't exist or is corrupted
-      this.data = {
-        challenges: [],
-        activeChallengeId: null
-      }
-      this.saveData()
+      console.error('Error parsing challenges data:', error);
+      return { challenges: [], activeChallengeId: null };
     }
   }
 
-  private saveData() {
-    writeFileSync(this.dataPath, JSON.stringify(this.data, null, 2))
+  private async setData(data: Database): Promise<void> {
+    const response = await fetch(`https://api.vercel.com/v1/edge-config/${process.env.EDGE_CONFIG_ID}/items`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${process.env.VERCEL_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        items: [{
+          operation: 'upsert',
+          key: 'challenges',
+          value: JSON.stringify(data)
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Failed to update Edge Config: ${error}`);
+    }
   }
 
   async createChallenge(image: File, answer: string): Promise<Challenge> {
@@ -108,25 +92,23 @@ class JsonDatabase implements IDatabase {
 
     const challenge = {
       id: Date.now().toString(),
-      image: url, // Store the full URL instead of just the filename
+      image: url,
       answer,
       guesses: []
     }
 
-    this.data.challenges.push(challenge)
-    this.data.activeChallengeId = challenge.id
-    this.saveData()
+    const data = await this.getData();
+    data.challenges.push(challenge);
+    data.activeChallengeId = challenge.id;
+    await this.setData(data);
 
-    return challenge
+    return challenge;
   }
 
   async getCurrentChallenge(): Promise<Challenge | null> {
-    console.log('Getting current challenge. Active ID:', this.data.activeChallengeId);
-    console.log('All challenges:', this.data.challenges);
-    if (!this.data.activeChallengeId) return null
-    const challenge = this.data.challenges.find(c => c.id === this.data.activeChallengeId)
-    console.log('Found challenge:', challenge);
-    return challenge || null
+    const data = await this.getData();
+    if (!data.activeChallengeId) return null;
+    return data.challenges.find(c => c.id === data.activeChallengeId) || null;
   }
 
   async submitGuess(
@@ -134,23 +116,15 @@ class JsonDatabase implements IDatabase {
     name: string,
     guess: string
   ): Promise<{ isCorrect: boolean; message: string }> {
-    console.log('Current database state:', this.data);
-    const challenge = await this.getCurrentChallenge()
-    console.log('Current challenge:', challenge);
+    const data = await this.getData();
+    const challenge = data.challenges.find(c => c.id === data.activeChallengeId);
+    
     if (!challenge) {
-      throw new Error("No active challenge")
+      throw new Error("No active challenge");
     }
 
-    const isCorrect = guess.toLowerCase() === challenge.answer.toLowerCase()
-    const timestamp = new Date().toISOString()
-
-    console.log('Adding guess to challenge:', {
-      idNumber,
-      name,
-      guess,
-      timestamp,
-      isCorrect
-    });
+    const isCorrect = guess.toLowerCase() === challenge.answer.toLowerCase();
+    const timestamp = new Date().toISOString();
 
     challenge.guesses.push({
       idNumber,
@@ -158,15 +132,14 @@ class JsonDatabase implements IDatabase {
       guess,
       timestamp,
       isCorrect
-    })
-    console.log('Updated challenge:', challenge);
-    this.saveData()
-    console.log('Data saved');
+    });
+
+    await this.setData(data);
 
     return {
       isCorrect,
       message: isCorrect ? "ניחוש נכון!" : "ניחוש שגוי, נסה שוב",
-    }
+    };
   }
 
   async getLeaderboard(): Promise<{
@@ -175,41 +148,58 @@ class JsonDatabase implements IDatabase {
     correctGuesses: number
     totalGuesses: number
   }[]> {
-    const playerStats = new Map<string, { correctGuesses: number; totalGuesses: number }>()
+    const data = await this.getData();
+    const playerStats = new Map<string, { 
+      name: string;
+      correctGuesses: number; 
+      totalGuesses: number 
+    }>();
     
-    this.data.challenges.forEach(challenge => {
+    data.challenges.forEach(challenge => {
       challenge.guesses.forEach(guess => {
-        const stats = playerStats.get(guess.idNumber) || { correctGuesses: 0, totalGuesses: 0 }
-        stats.totalGuesses++
-        if (guess.isCorrect) stats.correctGuesses++
-        playerStats.set(guess.idNumber, stats)
-      })
-    })
+        const stats = playerStats.get(guess.idNumber) || { 
+          name: guess.name,
+          correctGuesses: 0, 
+          totalGuesses: 0 
+        };
+        stats.totalGuesses++;
+        if (guess.isCorrect) stats.correctGuesses++;
+        playerStats.set(guess.idNumber, stats);
+      });
+    });
 
-    return Array.from(playerStats.entries()).map(([idNumber, stats]) => ({
-      idNumber,
-      name: this.data.challenges.find(c => c.guesses.some(g => g.idNumber === idNumber))?.guesses.find(g => g.idNumber === idNumber)?.name || "",
-      correctGuesses: stats.correctGuesses,
-      totalGuesses: stats.totalGuesses
-    }))
+    return Array.from(playerStats.entries())
+      .map(([idNumber, stats]) => ({
+        idNumber,
+        name: stats.name,
+        correctGuesses: stats.correctGuesses,
+        totalGuesses: stats.totalGuesses
+      }))
+      .sort((a, b) => b.correctGuesses - a.correctGuesses);
   }
 
   async eraseAllData(): Promise<void> {
+    const data = await this.getData();
+    
     // Delete all images from Vercel Blob Storage
-    for (const challenge of this.data.challenges) {
+    for (const challenge of data.challenges) {
       try {
-        await del(challenge.image);
+        // Extract the blob URL from the image URL
+        const blobUrl = new URL(challenge.image);
+        const pathname = blobUrl.pathname;
+        // Get the filename from the pathname
+        const filename = pathname.split('/').pop();
+        if (filename) {
+          await del(filename);
+        }
       } catch (error) {
         console.error('Error deleting image:', error);
       }
     }
 
-    this.data = {
-      challenges: [],
-      activeChallengeId: null
-    }
-    this.saveData()
+    // Clear the Edge Config data
+    await this.setData({ challenges: [], activeChallengeId: null });
   }
 }
 
-export const db = new JsonDatabase() 
+export const db = new EdgeConfigDatabase(); 
