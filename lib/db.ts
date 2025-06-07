@@ -49,7 +49,7 @@ class JsonDatabase implements IDatabase {
     this.dataDir = join(process.cwd(), "data")
     this.dataPath = join(this.dataDir, "db.json")
     console.log('Database path:', this.dataPath);
-    this.imagesDir = join(this.dataDir, "images")
+    this.imagesDir = join(process.cwd(), "public", "images")
     
     // Create data and images directories if they don't exist
     if (!existsSync(this.dataDir)) {

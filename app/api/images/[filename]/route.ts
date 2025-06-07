@@ -1,26 +1,29 @@
-import { NextResponse } from 'next/server';
-import { readFile } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
+import { NextRequest, NextResponse } from 'next/server';
+
+export const runtime = 'edge';
 
 export async function GET(
-  request: Request,
-  { params }: { params: { filename: string } }
+  request: NextRequest,
+  context: { params: Promise<{ filename: string }> }
 ) {
   try {
-    const filename = params.filename;
+    const { filename } = await context.params;
+    
     if (!filename) {
       return new NextResponse('Filename is required', { status: 400 });
     }
 
-    const imagePath = join(process.cwd(), 'data', 'images', filename);
+    // Get the image from the public directory
+    const imageUrl = new URL(`/images/${filename}`, request.url);
+    const response = await fetch(imageUrl);
 
-    if (!existsSync(imagePath)) {
+    if (!response.ok) {
+      console.error('Image not found:', imageUrl.toString());
       return new NextResponse('Image not found', { status: 404 });
     }
 
-    const imageBuffer = await readFile(imagePath);
     const contentType = getContentType(filename);
+    const imageBuffer = await response.arrayBuffer();
 
     return new NextResponse(imageBuffer, {
       headers: {
@@ -29,13 +32,16 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('Error serving image:', error);
-    return new NextResponse('Error serving image', { status: 500 });
+    console.error('Error in image route:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
 function getContentType(filename: string): string {
-  const ext = filename.split('.').pop()?.toLowerCase();
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
   switch (ext) {
     case 'jpg':
     case 'jpeg':
