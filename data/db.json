@@ -1,0 +1,107 @@
+{
+  "challenges": [
+    {
+      "id": "1749314422145",
+      "image": "1749314422144.jpg",
+      "answer": "ddd",
+      "guesses": [
+        {
+          "idNumber": "9355543",
+          "name": "ליאור קורן",
+          "guess": "אתגר",
+          "timestamp": "2025-06-07T18:05:48.983Z",
+          "isCorrect": false
+        },
+        {
+          "idNumber": "93434234",
+          "name": "kkk",
+          "guess": "ddd",
+          "timestamp": "2025-06-07T18:19:03.454Z",
+          "isCorrect": true
+        },
+        {
+          "idNumber": "934234",
+          "name": "ליאור קורן",
+          "guess": "ddd",
+          "timestamp": "2025-06-07T18:28:23.050Z",
+          "isCorrect": true
+        },
+        {
+          "idNumber": "342423",
+          "name": "ddd",
+          "guess": "ddd",
+          "timestamp": "2025-06-07T18:35:20.726Z",
+          "isCorrect": true
+        },
+        {
+          "idNumber": "342423",
+          "name": "asdasd",
+          "guess": "3123",
+          "timestamp": "2025-06-07T18:37:39.881Z",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "id": "1749321495391",
+      "image": "1749321495390.jpg",
+      "answer": "מהזה",
+      "guesses": [
+        {
+          "idNumber": "9355543",
+          "name": "ליאור קורן",
+          "guess": "מהזה",
+          "timestamp": "2025-06-07T18:38:29.363Z",
+          "isCorrect": true
+        }
+      ]
+    },
+    {
+      "id": "1749321534467",
+      "image": "1749321534465.jpg",
+      "answer": "123",
+      "guesses": [
+        {
+          "idNumber": "9355543",
+          "name": "ללליאורקורן",
+          "guess": "123",
+          "timestamp": "2025-06-07T18:39:03.170Z",
+          "isCorrect": true
+        }
+      ]
+    },
+    {
+      "id": "1749324216180",
+      "image": "1749324216179.jpg",
+      "answer": "מהזה",
+      "guesses": [
+        {
+          "idNumber": "9355543",
+          "name": "ליאור קורן",
+          "guess": "מהזה",
+          "timestamp": "2025-06-07T19:23:55.941Z",
+          "isCorrect": true
+        }
+      ]
+    },
+    {
+      "id": "1749325030331",
+      "image": "1749325030329.jpg",
+      "answer": "אתגר",
+      "guesses": []
+    },
+    {
+      "id": "1749325116904",
+      "image": "1749325116903.jpg",
+      "answer": "אתגר",
+      "guesses": []
+    },
+    {
+      "id": "1749325211972",
+      "image": "1749325211971.jpg",
+      "answer": "ddd",
+      "guesses": []
+    }
+  ],
+  "activeChallengeId": "1749325211972"
+}
