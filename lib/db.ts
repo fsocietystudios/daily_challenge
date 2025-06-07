@@ -28,7 +28,7 @@ export interface IDatabase {
     idNumber: string,
     name: string,
     guess: string
-  ): Promise<{ isCorrect: boolean; message: string }>
+  ): Promise<{ isCorrect: boolean; message: string; alreadyGuessed?: boolean }>
   getLeaderboard(): Promise<{
     idNumber: string
     name: string
@@ -115,12 +115,22 @@ class EdgeConfigDatabase implements IDatabase {
     idNumber: string,
     name: string,
     guess: string
-  ): Promise<{ isCorrect: boolean; message: string }> {
+  ): Promise<{ isCorrect: boolean; message: string; alreadyGuessed?: boolean }> {
     const data = await this.getData();
     const challenge = data.challenges.find(c => c.id === data.activeChallengeId);
     
     if (!challenge) {
       throw new Error("No active challenge");
+    }
+
+    // Check if user has already guessed for this challenge
+    const hasGuessed = challenge.guesses.some(g => g.idNumber === idNumber);
+    if (hasGuessed) {
+      return {
+        isCorrect: false,
+        message: "כבר ניחשת את האתגר הזה",
+        alreadyGuessed: true
+      };
     }
 
     const isCorrect = guess.toLowerCase() === challenge.answer.toLowerCase();
