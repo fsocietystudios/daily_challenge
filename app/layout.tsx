@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Assistant } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import HolyLoader from "holy-loader";
 import "./globals.css";
 
 const assistantFont = Assistant({
@@ -51,6 +52,7 @@ export default function RootLayout({
       <body
         className={`${assistantFont.variable} antialiased`}
       >
+        <HolyLoader zIndex={9999} color="#25821e" />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
