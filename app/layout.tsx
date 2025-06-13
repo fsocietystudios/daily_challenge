@@ -14,7 +14,7 @@ const assistantFont = Assistant({
 
 export const metadata: Metadata = {
   title: "החידון היומי",
-  description: "החידון היומי של פלוגת הבשור - אתגר יומי למשתתפים",
+  description: "החידון היומי של פלוגת הבשור",
   keywords: ["חידון", "אתגר", "פלוגת הבשור", "חידון יומי"],
   authors: [{ name: "פלוגת הבשור" }],
   creator: "פלוגת הבשור",
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
   openGraph: {
     title: "החידון היומי",
-    description: "החידון היומי של פלוגת הבשור - אתגר יומי למשתתפים",
+    description: "החידון היומי של פלוגת הבשור",
     type: "website",
     locale: "he_IL",
   },

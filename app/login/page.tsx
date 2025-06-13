@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,6 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
   const { theme } = useTheme();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -28,13 +26,12 @@ export default function Login() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ username, password }),
-        credentials: 'include', // Important for cookies
+        credentials: 'include',
       });
 
       const data = await response.json();
 
       if (data.success) {
-        // Force a hard navigation to ensure the cookie is properly set
         window.location.href = "/panel";
       } else {
         setError(data.message || "שם משתמש או סיסמה שגויים");

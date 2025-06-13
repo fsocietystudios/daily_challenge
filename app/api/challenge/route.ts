@@ -94,7 +94,6 @@ export async function PUT(request: Request) {
       );
     }
 
-    // Get user details from registration
     const registrations = await db.getRegistrations();
     const user = registrations.find(r => r.userId === userId);
     
@@ -149,4 +148,4 @@ export async function PUT(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

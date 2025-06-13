@@ -12,7 +12,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if user is approved
     const isValid = await db.isParticipantApproved(userId);
 
     return NextResponse.json(
@@ -26,4 +25,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

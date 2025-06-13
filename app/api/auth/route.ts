@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { SignJWT } from 'jose';
 
-// This should be in an environment variable in production
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 console.log(JWT_SECRET);
@@ -12,11 +11,9 @@ export async function POST(request: Request) {
   try {
     const { username, password } = await request.json();
 
-    // Use environment variables for credentials
     const validUsername = process.env.ADMIN_USERNAME;
     const validPassword = process.env.ADMIN_PASSWORD;
 
-    // Check if environment variables are set
     if (!validUsername || !validPassword) {
       console.error('Admin credentials not configured in environment variables');
       return NextResponse.json(
@@ -33,13 +30,11 @@ export async function POST(request: Request) {
           .setExpirationTime('24h')
           .sign(JWT_SECRET);
 
-        // Create response with success message
         const response = NextResponse.json({ 
           success: true,
           message: 'Login successful'
         });
 
-        // Set cookie using headers directly with a more compatible format
         const cookieOptions = [
           'HttpOnly',
           'Path=/',
@@ -48,10 +43,7 @@ export async function POST(request: Request) {
           process.env.NODE_ENV === 'production' ? 'Secure' : ''
         ].filter(Boolean).join('; ');
 
-        // Set the cookie in the response headers
         response.headers.set('Set-Cookie', `auth_token=${token}; ${cookieOptions}`);
-
-        // Also set a response header to indicate successful authentication
         response.headers.set('X-Auth-Status', 'success');
 
         console.log(token);
@@ -77,4 +69,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

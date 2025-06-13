@@ -24,7 +24,7 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading) return; // Prevent duplicate submissions
+    if (isLoading) return;
     setIsLoading(true);
     setMessage("");
 
@@ -53,7 +53,6 @@ export default function Register() {
       setUserId(data.userId);
       setMessage("ההרשמה בוצעה בהצלחה! אנא שמור את המזהה שלך:");
       
-      // Clear form after successful registration
       setName("");
       setPluga("");
       setTeam("");
@@ -67,7 +66,7 @@ export default function Register() {
 
   const handlePlugaChange = (value: string) => {
     setPluga(value as Pluga);
-    setTeam(""); // Reset team when pluga changes
+    setTeam("");
   };
 
   const handleCopyUserId = async () => {

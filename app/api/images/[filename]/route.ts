@@ -12,8 +12,6 @@ export async function GET(
       return new NextResponse('Filename is required', { status: 400 });
     }
 
-    // Since we're now using Vercel Blob Storage, we don't need to serve images directly
-    // The image URLs are already public and accessible
     return new NextResponse('Images are served directly from Vercel Blob Storage', { status: 200 });
   } catch (error) {
     console.error('Error serving image:', error);

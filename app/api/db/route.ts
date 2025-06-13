@@ -2,14 +2,12 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { jwtVerify } from 'jose';
 
-// This should be in an environment variable in production
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 export const runtime = 'edge';
 
 export async function GET(req: Request) {
   try {
-    // Get the auth token from cookies
     const token = req.headers.get('cookie')?.split(';')
       .find(c => c.trim().startsWith('auth_token='))
       ?.split('=')[1];
@@ -24,7 +22,6 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Fetch all data from the database
     const [registrations, challenges, guesses] = await Promise.all([
       db.getRegistrations(),
       db.getChallenges(),
@@ -47,7 +44,6 @@ export async function GET(req: Request) {
 
 export async function PUT(req: Request) {
   try {
-    // Get the auth token from cookies
     const token = req.headers.get('cookie')?.split(';')
       .find(c => c.trim().startsWith('auth_token='))
       ?.split('=')[1];
@@ -64,7 +60,6 @@ export async function PUT(req: Request) {
 
     const data = await req.json();
 
-    // Validate the data structure
     if (!data.registrations || !data.challenges || !data.guesses) {
       return NextResponse.json(
         { error: 'Invalid data structure: missing required fields' },
@@ -72,7 +67,6 @@ export async function PUT(req: Request) {
       );
     }
 
-    // Validate arrays
     if (!Array.isArray(data.registrations) || !Array.isArray(data.challenges) || !Array.isArray(data.guesses)) {
       return NextResponse.json(
         { error: 'Invalid data structure: fields must be arrays' },
@@ -80,7 +74,6 @@ export async function PUT(req: Request) {
       );
     }
 
-    // Update the database
     try {
       await Promise.all([
         db.updateRegistrations(data.registrations),
@@ -103,4 +96,4 @@ export async function PUT(req: Request) {
       { status: 500 }
     );
   }
-} 
+}

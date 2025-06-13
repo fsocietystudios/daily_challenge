@@ -6,7 +6,6 @@ import { MagicCard } from "@/components/magicui/magic-card";
 import { useTheme } from "next-themes";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
 import { validateAndSanitizeAdmin } from '@/lib/security';
 import { useRouter } from "next/navigation";
 import {
@@ -30,7 +29,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Search, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 interface Registration {
@@ -59,7 +58,6 @@ export default function Panel() {
   const [isErasing, setIsErasing] = useState(false);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedUser, setSelectedUser] = useState<Registration | null>(null);
   const [dbData, setDbData] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState<any>(null);
@@ -114,7 +112,6 @@ export default function Panel() {
       setEditedData(data);
       setJsonError(null);
 
-      // Check if there's an active challenge
       if (!data.challenges || data.challenges.length === 0) {
         setShowNoChallengeDialog(true);
       }
@@ -231,25 +228,21 @@ export default function Panel() {
     try {
       const newData = JSON.parse(e.target.value);
       
-      // Validate the data structure
       if (!newData.registrations || !newData.challenges || !newData.guesses) {
         setJsonError('Invalid data structure: missing required fields');
         return;
       }
 
-      // Validate registrations
       if (!Array.isArray(newData.registrations)) {
         setJsonError('Invalid registrations: must be an array');
         return;
       }
 
-      // Validate challenges
       if (!Array.isArray(newData.challenges)) {
         setJsonError('Invalid challenges: must be an array');
         return;
       }
 
-      // Validate guesses
       if (!Array.isArray(newData.guesses)) {
         setJsonError('Invalid guesses: must be an array');
         return;
@@ -264,11 +257,10 @@ export default function Panel() {
 
   const handleSaveDb = async () => {
     if (jsonError) {
-      return; // Don't save if there's a JSON error
+      return;
     }
 
     try {
-      // Ensure the data is properly structured
       const dataToSave = {
         registrations: editedData.registrations || [],
         challenges: editedData.challenges || [],
@@ -324,7 +316,6 @@ export default function Panel() {
 
   const filteredRegistrations = useMemo(() => {
     if (!searchQuery) {
-      // If no search query, only show pending registrations
       return groupedRegistrations.flatMap(group => 
         group.teams.flatMap(team => 
           team.registrations.filter(reg => reg.status === 'pending')
@@ -332,7 +323,6 @@ export default function Panel() {
       );
     }
 
-    // If there's a search query, show all matching registrations
     return groupedRegistrations.flatMap(group => 
       group.teams.flatMap(team => 
         team.registrations.filter(reg => 

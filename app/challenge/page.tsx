@@ -35,7 +35,6 @@ export default function Challenge() {
   const [challenge, setChallenge] = useState<{ image: string } | null>(null);
   
   useEffect(() => {
-    // Check if user is logged in
     const savedUserId = localStorage.getItem("userId");
     if (!savedUserId) {
       router.push("/");

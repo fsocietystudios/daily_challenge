@@ -8,7 +8,6 @@ import { PLUGA_OPTIONS, TEAM_OPTIONS } from '@/lib/constants';
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
-// This should be in an environment variable in production
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 async function checkRateLimit(ip: string): Promise<boolean> {
@@ -45,14 +44,13 @@ export async function GET(req: NextRequest) {
     const registrations = await db.getRegistrations();
     console.log('Registrations retrieved:', registrations);
 
-    // Ensure we're returning an array
     const response = Array.isArray(registrations) ? registrations : [];
     console.log('Sending response:', response);
     
     return NextResponse.json(response);
   } catch (error) {
     console.error('Error in GET /api/register:', error);
-    // Return empty array instead of error
+
     return NextResponse.json([]);
   }
 }
@@ -166,4 +164,4 @@ export async function PUT(req: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

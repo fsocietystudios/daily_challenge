@@ -4,89 +4,27 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
-import confetti from 'canvas-confetti';
 import { Background } from "@/components/background/background";
 import { ModeToggle } from "@/components/ui/dark-mode-toggle";
 import { RainbowButton } from "@/components/magicui/rainbow-button";
-import { VelocityScroll } from "@/components/magicui/scroll-based-velocity";
 import { MagicCard } from "@/components/magicui/magic-card";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Leaderboard } from "@/components/leaderboard";
 import { Button } from '@/components/ui/button';
 
 export default function Welcome() {
   const { theme } = useTheme();
   const router = useRouter();
   const [userId, setUserId] = useState('');
-  const [name, setName] = useState('');
-  const [guess, setGuess] = useState('');
-  const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [leaderboard, setLeaderboard] = useState<{
-    overall: { userId: string; name: string; pluga: string; team: string; correctGuesses: number; totalGuesses: number }[];
-    byPluga: { [key: string]: { correctGuesses: number; totalGuesses: number; users: number } };
-    byTeam: { [key: string]: { correctGuesses: number; totalGuesses: number; users: number } };
-  }>({ overall: [], byPluga: {}, byTeam: {} });
-  const [hasGuessed, setHasGuessed] = useState(false);
   const [error, setError] = useState("");
-  const [challenge, setChallenge] = useState<{ image: string } | null>(null);
   
   useEffect(() => {
-    // Check if user is already logged in
     const savedUserId = localStorage.getItem("userId");
     if (savedUserId) {
       router.push("/challenge");
     }
   }, [router]);
-
-  const fetchChallenge = async () => {
-    try {
-      console.log('Fetching challenge...');
-      setIsInitialLoading(true);
-      setError("");
-      const response = await fetch("/api/challenge");
-      console.log('Response status:', response.status);
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch challenge");
-      }
-      
-      const data = await response.json();
-      console.log('Challenge data:', data);
-      
-      if (data.error) {
-        setError(data.error);
-        setChallenge(null);
-        return;
-      }
-
-      if (!data.challenge || !data.challenge.image) {
-        console.warn('No challenge or image in response:', data);
-        setError("לא נמצא אתגר פעיל");
-        setChallenge(null);
-        return;
-      }
-
-      setChallenge(data.challenge);
-      setLeaderboard(data.leaderboard);
-    } catch (error) {
-      console.error("Error fetching challenge:", error);
-      setError("שגיאה בטעינת האתגר");
-      setChallenge(null);
-    } finally {
-      setIsInitialLoading(false);
-    }
-  };
-
-  const triggerConfetti = () => {
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
-  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,7 +38,6 @@ export default function Welcome() {
     }
 
     try {
-      // Validate userId with backend
       const response = await fetch('/api/validate-user', {
         method: 'POST',
         headers: {
@@ -121,7 +58,6 @@ export default function Welcome() {
         return;
       }
 
-      // Store userId in localStorage only if valid
       localStorage.setItem("userId", userId.trim());
       router.push("/challenge");
     } catch (error: any) {
@@ -185,9 +121,9 @@ export default function Welcome() {
                       <p className="text-sm text-red-500">{error}</p>
                     )}
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <RainbowButton type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? 'מתחבר...' : 'התחבר'}
-                  </Button>
+                  </RainbowButton>
                 </form>
               </CardContent>
               <CardFooter className="p-4 border-t border-border">

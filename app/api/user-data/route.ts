@@ -12,10 +12,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get all registrations
     const registrations = await db.getRegistrations();
-    
-    // Find the user's registration
     const userRegistration = registrations.find(reg => reg.userId === userId);
 
     if (!userRegistration) {
@@ -37,4 +34,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}
