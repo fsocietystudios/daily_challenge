@@ -21,6 +21,7 @@
     "@upstash/redis": "^1.35.0",
     "@vercel/blob": "^1.1.1",
     "@vercel/edge-config": "^1.4.0",
+    "@vercel/speed-insights": "^1.2.0",
     "better-sqlite3": "^11.10.0",
     "canvas-confetti": "^1.9.3",
     "class-variance-authority": "^0.7.1",
