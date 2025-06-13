@@ -198,7 +198,7 @@ export default function Panel() {
       setImage(null);
       setAnswer("");
       setPreviewUrl(null);
-      router.push("/");
+      router.push("/challenge");
     } catch (error) {
       console.error("Error creating challenge:", error);
       setMessage(error instanceof Error ? error.message : "שגיאה ביצירת האתגר");
@@ -359,7 +359,7 @@ export default function Panel() {
                 variant="outline"
                 onClick={() => {
                   document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-                  window.location.href = '/';
+                  window.location.href = '/challenge';
                 }}
               >
                 חזרה לבית
@@ -382,7 +382,7 @@ export default function Panel() {
                   </div>
 
                   <div className="space-y-4">
-                    <Card>
+                    <Card className="py-6">
                       <CardHeader>
                         <CardTitle>יצירת אתגר חדש</CardTitle>
                         <CardDescription>

@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Leaderboard } from "@/components/leaderboard";
 import { Button } from '@/components/ui/button';
 
-export default function Home() {
+export default function Welcome() {
   const { theme } = useTheme();
   const router = useRouter();
   const [userId, setUserId] = useState('');
@@ -34,8 +34,12 @@ export default function Home() {
   const [challenge, setChallenge] = useState<{ image: string } | null>(null);
   
   useEffect(() => {
-    fetchChallenge();
-  }, []);
+    // Check if user is already logged in
+    const savedUserId = localStorage.getItem("userId");
+    if (savedUserId) {
+      router.push("/challenge");
+    }
+  }, [router]);
 
   const fetchChallenge = async () => {
     try {
@@ -84,49 +88,49 @@ export default function Home() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setIsLoading(true);
-    setMessage('');
+    
+    if (!userId.trim()) {
+      setError("נא להזין מזהה משתמש");
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      const response = await fetch('/api/challenge', {
-        method: 'PUT',
+      // Validate userId with backend
+      const response = await fetch('/api/validate-user', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          userId,
-          guess,
-        }),
+        body: JSON.stringify({ userId: userId.trim() }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'שגיאה בשליחת הניחוש');
+        throw new Error(data.error || 'שגיאה באימות המשתמש');
       }
 
-      setMessage(data.message);
-      if (data.isCorrect) {
-        setGuess('');
-        setHasGuessed(true);
-        triggerConfetti();
+      if (!data.isValid) {
+        setError("מזהה משתמש לא תקין");
+        setIsLoading(false);
+        return;
       }
 
-      if (data.leaderboard) {
-        console.log('Updating leaderboard with:', data.leaderboard);
-        setLeaderboard(data.leaderboard);
-      } else {
-        console.warn('No leaderboard data in response');
-      }
+      // Store userId in localStorage only if valid
+      localStorage.setItem("userId", userId.trim());
+      router.push("/challenge");
     } catch (error: any) {
-      setMessage(error.message || 'שגיאה בשליחת הניחוש');
+      setError(error.message || 'שגיאה בהתחברות');
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <main className="relative min-h-screen" dir="rtl">
       <Background />
@@ -141,132 +145,66 @@ export default function Home() {
             >
               הרשמה
             </RainbowButton>
-            <RainbowButton 
-              variant={"default"} 
-              className=""
-              onClick={() => router.push("/login")}
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col justify-center items-center gap-10 px-4">
+          <div className="relative w-64 h-64">
+            <Image
+              src="/logo.png"
+              alt="Logo"
+              width={300}
+              height={300}
+              className="object-contain"
+              priority
+            />
+          </div>
+          <Card className="w-full max-w-md">
+            <MagicCard
+              gradientColor={theme === "dark" ? "#262626" : "#D9D9D955"}
+              className="p-0"
             >
-              פאנל
-            </RainbowButton>
-          </div>
+              <CardHeader className="border-b border-border p-4">
+                <CardTitle>כניסה</CardTitle>
+                <CardDescription>
+                  הזן את מזהה המשתמש שלך כדי להתחבר
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-4">
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium">מזהה משתמש</label>
+                    <Input
+                      type="text"
+                      value={userId}
+                      onChange={(e) => setUserId(e.target.value)}
+                      placeholder="הכנס את המזהה שקיבלת בהרשמה"
+                      className="w-full"
+                      disabled={isLoading}
+                    />
+                    {error && (
+                      <p className="text-sm text-red-500">{error}</p>
+                    )}
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? 'מתחבר...' : 'התחבר'}
+                  </Button>
+                </form>
+              </CardContent>
+              <CardFooter className="p-4 border-t border-border">
+                <p className="text-sm text-center w-full">
+                  אין לך מזהה?{" "}
+                  <Button
+                    variant="link"
+                    className="p-0"
+                    onClick={() => router.push("/register")}
+                  >
+                    הירשם כאן
+                  </Button>
+                </p>
+              </CardFooter>
+            </MagicCard>
+          </Card>
         </div>
-        <div className="flex-1 flex flex-col justify-center items-center gap-20 px-10">
-          {isInitialLoading ? (
-            <div className="w-full text-center">
-              <div className="relative w-64 h-64 mx-auto">
-                <Image
-                  src="/logo.png"
-                  alt="Loading"
-                  fill
-                  className="object-contain animate-pulse"
-                  priority
-                />
-              </div>
-            </div>
-          ) : error ? (
-            <div className="w-full text-center">
-              <VelocityScroll className="text-4xl font-bold">{error}</VelocityScroll>
-            </div>
-          ) : !challenge ? (
-            <div className="w-full text-center">
-              <VelocityScroll className="text-4xl font-bold">לא נמצא אתגר פעיל</VelocityScroll>
-            </div>
-          ) : (
-            <div className="md:-mt-32 animate-fade-in flex flex-col md:flex-row gap-10 md:gap-20 justify-center items-start w-full max-w-[1200px]">
-              <Card className="p-0 w-full md:w-[400px] text-center shadow-none border-none">
-                <MagicCard
-                  gradientColor={theme === "dark" ? "#262626" : "#D9D9D955"}
-                  className="p-0"
-                >
-                  <CardHeader className="border-b border-border p-4 [.border-b]:pb-4">
-                    <CardTitle>החידון היומי</CardTitle>
-                    <CardDescription>
-                      ברוכים הבאים לחידון היומי של פלוגת הבשור
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-4 flex justify-center">
-                    <div className="relative w-[250px] h-[250px] md:w-[300px] md:h-[300px]">
-                      {challenge?.image ? (
-                        <Image
-                          src={challenge.image}
-                          alt="Daily Challenge"
-                          fill
-                          className="object-contain rounded-2xl"
-                          priority
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl">
-                          <p className="text-gray-500 dark:text-gray-400">אין תמונה זמינה</p>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                  <CardFooter className="p-4 border-t border-border [.border-t]:pt-4">
-                    <form onSubmit={handleSubmit} className="w-full space-y-4">
-                      <div className="space-y-2">
-                        <div>
-                          <label className="block text-sm font-medium mb-1">מזהה משתמש</label>
-                          <Input
-                            type="text"
-                            value={userId}
-                            onChange={(e) => setUserId(e.target.value)}
-                            required
-                            className="w-full"
-                            placeholder="הכנס את המזהה שקיבלת בהרשמה"
-                          />
-                        </div>
-
-                        {/* <div>
-                          <label className="block text-sm font-medium mb-1">שם מלא</label>
-                          <Input
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            required
-                            className="w-full"
-                            placeholder="הכנס את שמך המלא"
-                          />
-                        </div> */}
-
-                        <div>
-                          <label className="block text-sm font-medium mb-1">ניחוש</label>
-                          <Input
-                            type="text"
-                            value={guess}
-                            onChange={(e) => setGuess(e.target.value)}
-                            required
-                            className="w-full"
-                            placeholder="הכנס את הניחוש שלך"
-                          />
-                        </div>
-                      </div>
-                      {message && (
-                        <div className={`mt-4 p-4 rounded ${message.includes('נכון') ? 'bg-green-500' : 'bg-red-500'}`}>
-                          <p className="text-center">{message}</p>
-                        </div>
-                      )}
-                      <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={isLoading}
-                      >
-                        {isLoading ? 'שולח...' : 'שלח ניחוש'}
-                      </Button>
-                    </form>
-                  </CardFooter>
-                </MagicCard>
-              </Card>
-              <div className="w-full md:w-[400px]">
-                <Leaderboard data={leaderboard} />
-              </div>
-            </div>
-          )}
-        </div>
-        {!isInitialLoading && (
-          <div className="opacity-5 absolute bottom-0 left-0 right-0 flex w-full flex-col items-center justify-center overflow-hidden" dir="ltr">
-            <VelocityScroll className="text-center w-full">החידון היומי</VelocityScroll>
-          </div>
-        )}
       </div>
     </main>
   );
