@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Assistant } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Analytics } from "@vercel/analytics/next"
 import HolyLoader from "holy-loader";
 import "./globals.css";
 
@@ -62,6 +63,7 @@ export default function RootLayout({
         >
           {children}
         </ThemeProvider>
+        <Analytics />
         <SpeedInsights />
       </body>
     </html>
