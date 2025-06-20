@@ -77,7 +77,7 @@ export default function Challenge() {
       }
       
       const data = await response.json();
-      console.log('Challenge data:', data);
+      // console.log('Challenge data:', data);
       
       if (data.error) {
         setError(data.error);
@@ -86,7 +86,7 @@ export default function Challenge() {
       }
 
       if (!data.challenge || !data.challenge.image) {
-        console.warn('No challenge or image in response:', data);
+        // console.warn('No challenge or image in response:', data);
         setError("לא נמצא אתגר פעיל");
         setChallenge(null);
         return;

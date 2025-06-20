@@ -60,18 +60,14 @@ async function generateUserId(name: string, pluga: Pluga, team: Team): Promise<s
   const timestamp = Date.now();
   const baseString = `${pluga}-${team}-${timestamp}`;
   
-  // Convert string to Uint8Array
   const encoder = new TextEncoder();
   const data = encoder.encode(baseString);
   
-  // Hash the data
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   
-  // Convert to hex string and take first 8 characters
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 8);
   
-  // Create a more readable format: BHD-XXXX
   return `BHD-${hashHex.toUpperCase()}`;
 }
 
@@ -82,7 +78,6 @@ async function generateUniqueUserId(name: string, pluga: Pluga, team: Team, db: 
   while (attempts < maxAttempts) {
     const userId = await generateUserId(name, pluga, team);
     
-    // Check if this userId already exists
     const registrations = await db.getRegistrations();
     const existingUser = registrations.find(r => r.userId === userId);
     
@@ -91,11 +86,10 @@ async function generateUniqueUserId(name: string, pluga: Pluga, team: Team, db: 
     }
     
     attempts++;
-    // Add a small delay to ensure different timestamps
+    
     await new Promise(resolve => setTimeout(resolve, 1));
   }
   
-  // If we still have duplicates after max attempts, add a random suffix
   const baseUserId = await generateUserId(name, pluga, team);
   const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
   return `${baseUserId}-${randomSuffix}`;
@@ -103,7 +97,7 @@ async function generateUniqueUserId(name: string, pluga: Pluga, team: Team, db: 
 
 class RedisDatabase implements IDatabase {
   private redis: Redis;
-  private readonly CACHE_TTL = 5000; // 5 seconds cache
+  private readonly CACHE_TTL = 5000; 
 
   constructor() {
     console.log('Initializing RedisDatabase...');
@@ -123,20 +117,19 @@ class RedisDatabase implements IDatabase {
       const data = await this.redis.hgetall<Record<string, string>>(key);
       if (!data) return null;
 
-      // Parse each value in the hash
       const result: Record<string, T> = {};
       for (const [field, value] of Object.entries(data)) {
         try {
-          // Handle the case where value is already an object
+          
           if (typeof value === 'object' && value !== null) {
             result[field] = value as unknown as T;
           } else {
-            // Try to parse JSON string
+            
             result[field] = JSON.parse(value) as T;
           }
         } catch (error) {
           console.error(`Error parsing JSON for hash field ${field}:`, error);
-          // If parsing fails, try to use the value as is
+          
           result[field] = value as unknown as T;
         }
       }
@@ -149,7 +142,6 @@ class RedisDatabase implements IDatabase {
 
   private async setHashData<T>(key: string, field: string, value: T): Promise<void> {
     try {
-      // Ensure we're storing a proper JSON string
       let serialized: string;
       if (typeof value === 'string') {
         serialized = value;
@@ -158,6 +150,7 @@ class RedisDatabase implements IDatabase {
       } else {
         serialized = String(value);
       }
+
       await this.redis.hset(key, { [field]: serialized });
     } catch (error) {
       console.error(`Error setting hash data for key ${key}, field ${field}:`, error);
@@ -170,7 +163,6 @@ class RedisDatabase implements IDatabase {
       const data = await this.redis.get<string>(key);
       if (!data) return null;
       
-      // Handle the case where data is already an object
       if (typeof data === 'object' && data !== null) {
         return data as unknown as T;
       }
@@ -189,7 +181,6 @@ class RedisDatabase implements IDatabase {
 
   private async setStringData<T>(key: string, value: T): Promise<void> {
     try {
-      // Ensure we're storing a proper JSON string
       let serialized: string;
       if (typeof value === 'string') {
         serialized = value;
@@ -198,6 +189,7 @@ class RedisDatabase implements IDatabase {
       } else {
         serialized = String(value);
       }
+
       await this.redis.set(key, serialized);
     } catch (error) {
       console.error(`Error setting string data for key ${key}:`, error);
@@ -208,12 +200,10 @@ class RedisDatabase implements IDatabase {
   async createChallenge(image: File, answers: string[], question?: string): Promise<Challenge> {
     console.log('Creating challenge with answers:', answers);
     
-    // Upload image to Vercel Blob Storage
     const blob = await put(`challenges/${Date.now()}.jpg`, image, {
       access: 'public',
     });
 
-    // Normalize answers
     const normalizedAnswers = answers.map(a => String(a).trim());
     console.log('Normalized answers:', normalizedAnswers);
 
@@ -228,10 +218,7 @@ class RedisDatabase implements IDatabase {
 
     console.log('Created challenge:', challenge);
     
-    // Store the challenge in hash
     await this.setHashData('challenges', challenge.id, challenge);
-    
-    // Set as current challenge
     await this.setStringData('current_challenge', challenge);
     
     return challenge;
@@ -265,7 +252,6 @@ class RedisDatabase implements IDatabase {
       throw new Error("No active challenge");
     }
 
-    // Handle both single answer and answers array formats
     const answers = Array.isArray(challenge.answers) 
       ? challenge.answers.map((a: string) => String(a))
       : challenge.answer 
@@ -285,7 +271,6 @@ class RedisDatabase implements IDatabase {
       }
     });
 
-    // Check if user has already guessed
     const hasGuessed = challenge.guesses.some((g: Guess) => g.userId === userId);
     if (hasGuessed) {
       return {
@@ -310,14 +295,10 @@ class RedisDatabase implements IDatabase {
       timestamp: new Date().toISOString(),
       isCorrect
     };
-
-    // Update challenge with new guess
+    
     challenge.guesses.push(newGuess);
     
-    // Update challenges hash
     await this.setHashData('challenges', challenge.id, challenge);
-    
-    // Update current challenge
     await this.setStringData('current_challenge', challenge);
 
     return {
@@ -335,7 +316,6 @@ class RedisDatabase implements IDatabase {
     const challenges = await this.getChallenges();
     const allGuesses: Guess[] = [];
     
-    // Collect all guesses from all challenges
     if (Array.isArray(challenges)) {
       for (const challenge of challenges) {
         if (challenge?.guesses && Array.isArray(challenge.guesses)) {
@@ -344,7 +324,6 @@ class RedisDatabase implements IDatabase {
       }
     }
 
-    // Get user statistics
     const userStats = new Map<string, { 
       name: string;
       pluga: string;
@@ -353,7 +332,6 @@ class RedisDatabase implements IDatabase {
       totalGuesses: number;
     }>();
 
-    // Initialize user stats
     if (Array.isArray(registrations)) {
       for (const reg of registrations) {
         userStats.set(reg.userId, {
@@ -365,8 +343,7 @@ class RedisDatabase implements IDatabase {
         });
       }
     }
-
-    // Calculate user statistics
+    
     for (const guess of allGuesses) {
       const stats = userStats.get(guess.userId);
       if (stats) {
@@ -376,16 +353,14 @@ class RedisDatabase implements IDatabase {
         }
       }
     }
-
-    // Convert to array and sort by correct guesses
+    
     const overall = Array.from(userStats.entries())
       .map(([userId, stats]) => ({
         userId,
         ...stats
       }))
       .sort((a, b) => b.correctGuesses - a.correctGuesses);
-
-    // Calculate pluga statistics
+    
     const byPluga: { [key: string]: { correctGuesses: number; totalGuesses: number; users: number } } = {};
     if (Array.isArray(registrations)) {
       for (const reg of registrations) {
@@ -395,8 +370,7 @@ class RedisDatabase implements IDatabase {
         byPluga[reg.pluga].users++;
       }
     }
-
-    // Calculate team statistics
+    
     const byTeam: { [key: string]: { correctGuesses: number; totalGuesses: number; users: number } } = {};
     if (Array.isArray(registrations)) {
       for (const reg of registrations) {
@@ -406,8 +380,7 @@ class RedisDatabase implements IDatabase {
         byTeam[reg.team].users++;
       }
     }
-
-    // Add guess statistics to pluga and team stats
+    
     for (const stats of overall) {
       byPluga[stats.pluga].correctGuesses += stats.correctGuesses;
       byPluga[stats.pluga].totalGuesses += stats.totalGuesses;
@@ -423,14 +396,13 @@ class RedisDatabase implements IDatabase {
   }
 
   async eraseAllData(): Promise<void> {
-    // Delete all images from Vercel Blob Storage
     const challenges = await this.getChallenges();
     for (const challenge of challenges) {
       try {
-        // Extract the blob URL from the image URL
+        
         const blobUrl = new URL(challenge.image);
         const pathname = blobUrl.pathname;
-        // Get the filename from the pathname
+        
         const filename = pathname.split('/').pop();
         if (filename) {
           await del(filename);
@@ -440,7 +412,6 @@ class RedisDatabase implements IDatabase {
       }
     }
 
-    // Clear Redis data
     await Promise.all([
       this.redis.del('challenges'),
       this.redis.del('current_challenge'),
@@ -452,10 +423,7 @@ class RedisDatabase implements IDatabase {
   async submitRegistration(name: string, pluga: Pluga, team: Team): Promise<Registration> {
     console.log('Submitting registration:', { name, pluga, team });
     
-    // Get existing registrations
     const registrations = await this.getRegistrations();
-    
-    // Check for existing registration with same name, pluga, and team
     const existingRegistration = registrations.find(r => 
       r.name === name && 
       r.pluga === pluga && 
@@ -478,8 +446,7 @@ class RedisDatabase implements IDatabase {
       status: 'pending',
       timestamp: new Date().toISOString()
     };
-
-    // Add new registration
+    
     registrations.push(registration);
     await this.setStringData('registrations', registrations);
     
@@ -495,7 +462,7 @@ class RedisDatabase implements IDatabase {
       return registrations || [];
     } catch (error) {
       console.error('Error in getRegistrations:', error);
-      return []; // Return empty array on error
+      return []; 
     }
   }
 
@@ -529,8 +496,7 @@ class RedisDatabase implements IDatabase {
     if (!rateLimit) {
       return 0;
     }
-
-    // Check if rate limit has expired (24 hours)
+    
     if (Date.now() - rateLimit.timestamp > 24 * 60 * 60 * 1000) {
       return 0;
     }
@@ -555,10 +521,8 @@ class RedisDatabase implements IDatabase {
   }
 
   async updateChallenges(challenges: Challenge[]): Promise<void> {
-    // Clear existing challenges
     await this.redis.del('challenges');
     
-    // Add each challenge to the hash
     for (const challenge of challenges) {
       await this.setHashData('challenges', challenge.id, challenge);
     }
@@ -566,7 +530,7 @@ class RedisDatabase implements IDatabase {
 
   async updateGuesses(guesses: Guess[]): Promise<void> {
     const challenges = await this.getChallenges();
-    // Update guesses in each challenge
+    
     challenges.forEach(challenge => {
       challenge.guesses = guesses.filter(g => 
         challenges.some(c => c.guesses.some(eg => eg.userId === g.userId && eg.timestamp === g.timestamp))

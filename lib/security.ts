@@ -1,20 +1,15 @@
 import { z } from 'zod';
 import { db } from './db';
 
-// Input validation schemas
 const idNumberSchema = z.string().min(1, "נא להזין מספר תעודת זהות");
 const nameSchema = z.string().min(1, "נא להזין שם");
 const guessSchema = z.string().min(1, "נא להזין ניחוש");
 const answerSchema = z.array(z.string().min(1, "נא להזין תשובה"));
 
-// List of accepted participants
-// const ACCEPTED_PARTICIPANTS = [ ... ];
-
 export async function isParticipantAllowed(idNumber: string): Promise<boolean> {
   return await db.isParticipantApproved(idNumber);
 }
 
-// Sanitize input to prevent XSS
 export function sanitizeInput(input: string): string {
   return input.trim();
 }
@@ -39,7 +34,6 @@ export function validateAndSanitize<T extends Record<string, any>>(
     switch (type) {
       case 'string':
         if (typeof value === 'string') {
-          // Basic XSS prevention
           result[key] = value
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
@@ -68,7 +62,6 @@ export function validateAndSanitize<T extends Record<string, any>>(
   return result;
 }
 
-// Validate and sanitize input for user submissions
 export function validateAndSanitizeUser(input: {
   idNumber?: string
   name?: string
@@ -98,7 +91,6 @@ export function validateAndSanitizeUser(input: {
   }
 }
 
-// Validate and sanitize input for admin panel
 export function validateAndSanitizeAdmin(input: {
   answer?: string[]
 }) {
@@ -117,4 +109,4 @@ export function validateAndSanitizeAdmin(input: {
     }
     throw error;
   }
-} 
+}
