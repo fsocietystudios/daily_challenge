@@ -207,7 +207,7 @@ export default function Challenge() {
             <>
               {userName && (
                 <div className="w-full text-center relative z-20 mb-8">
-                  <SparklesText className="text-3xl font-bold">
+                  <SparklesText className="text-3xl">
                     שלום, {userName}!
                   </SparklesText>
                 </div>
