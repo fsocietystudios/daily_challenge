@@ -52,6 +52,7 @@ export default function Panel() {
   const router = useRouter();
   const [image, setImage] = useState<File | null>(null);
   const [answer, setAnswer] = useState("");
+  const [question, setQuestion] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -174,11 +175,13 @@ export default function Panel() {
       const formData = new FormData();
       formData.append("image", image);
       formData.append("answer", JSON.stringify(validationResult.answer));
+      formData.append("question", question);
 
       console.log('Submitting challenge with:', {
         imageSize: image.size,
         imageType: image.type,
-        answers: validationResult.answer
+        answers: validationResult.answer,
+        question: question || 'No question provided'
       });
 
       const response = await fetch("/api/challenge", {
@@ -194,6 +197,7 @@ export default function Panel() {
       setMessage("האתגר נוצר בהצלחה");
       setImage(null);
       setAnswer("");
+      setQuestion("");
       setPreviewUrl(null);
       router.push("/challenge");
     } catch (error) {
@@ -365,7 +369,7 @@ export default function Panel() {
                 <TabsTrigger value="database">ניהול בסיס נתונים</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="challenge" className="h-[350px] overflow-y-auto space-y-4">
+              <TabsContent value="challenge" className="h-[450px] overflow-y-auto space-y-4">
                 <div className="space-y-4">
                   <div className="flex justify-end">
                     <h2 className="text-xl font-semibold">ניהול אתגרים</h2>
@@ -391,6 +395,19 @@ export default function Panel() {
                               accept="image/*"
                               onChange={handleImageChange}
                               required
+                              dir="rtl"
+                              className="text-right"
+                            />
+                          </div>
+                          <div className="space-y-2 text-right">
+                            <div className="flex justify-end">
+                              <Label htmlFor="question" className="text-right">שאלה</Label>
+                            </div>
+                            <Input
+                              id="question"
+                              value={question}
+                              onChange={(e) => setQuestion(e.target.value)}
+                              placeholder="הכנס את השאלה של האתגר"
                               dir="rtl"
                               className="text-right"
                             />
@@ -435,7 +452,7 @@ export default function Panel() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="users" className="h-[350px]">
+              <TabsContent value="users" className="h-[450px]">
                 <div className="flex flex-col h-full">
                   <div className="space-y-6">
                     <h2 className="text-xl font-semibold">ניהול הרשמות</h2>
@@ -575,7 +592,7 @@ export default function Panel() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="database" className="h-[350px] overflow-y-auto space-y-4">
+              <TabsContent value="database" className="h-[450px] overflow-y-auto space-y-4">
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
                     <div className="flex gap-2">
@@ -631,7 +648,7 @@ export default function Panel() {
                       {isEditing ? (
                         <div className="relative">
                           <textarea
-                            className={`w-full h-[60vh] p-4 font-mono text-sm bg-transparent resize-none focus:outline-none ${
+                            className={`w-full h-[330px] p-4 font-mono text-sm bg-transparent resize-none focus:outline-none ${
                               jsonError ? 'border-red-500' : ''
                             }`}
                             value={JSON.stringify(editedData, null, 2)}
@@ -646,7 +663,7 @@ export default function Panel() {
                           )}
                         </div>
                       ) : (
-                        <pre className="text-sm overflow-auto h-[234px] p-4" style={{ textAlign: 'left' }}>
+                        <pre className="text-sm overflow-auto h-[330px] p-4" style={{ textAlign: 'left' }}>
                           {dbData ? JSON.stringify(dbData, null, 2) : 'Loading...'}
                         </pre>
                       )}

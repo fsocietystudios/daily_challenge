@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     if (!isAllowed) {
       console.log('Rate limit exceeded');
       return NextResponse.json(
-        { error: 'יותר מדי בקשות. נסה שוב מחר.' },
+        { error: 'יותר מדי בקשות. נסה שוב מאוחר יותר.' },
         { status: 429 }
       );
     }

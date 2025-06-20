@@ -26,6 +26,7 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const image = formData.get('image') as File;
     const answerStr = formData.get('answer') as string;
+    const question = formData.get('question') as string;
 
     if (!image || !answerStr) {
       console.error('Missing required fields:', { image: !!image, answer: !!answerStr });
@@ -58,10 +59,11 @@ export async function POST(request: Request) {
     console.log('Creating new challenge with:', {
       imageSize: image.size,
       imageType: image.type,
-      answers: sanitizedInput.answer
+      answers: sanitizedInput.answer,
+      question: question || 'No question provided'
     });
 
-    const result = await db.createChallenge(image, sanitizedInput.answer);
+    const result = await db.createChallenge(image, sanitizedInput.answer, question || undefined);
     console.log('Challenge created successfully:', result);
 
     return NextResponse.json(result);

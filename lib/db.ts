@@ -24,12 +24,13 @@ interface Challenge {
   image: string
   answers?: string[]
   answer?: string
+  question?: string
   guesses: Guess[]
   createdAt: string
 }
 
 export interface IDatabase {
-  createChallenge(image: File, answers: string[]): Promise<Challenge>
+  createChallenge(image: File, answers: string[], question?: string): Promise<Challenge>
   getCurrentChallenge(): Promise<Challenge | null>
   submitGuess(
     userId: string,
@@ -72,6 +73,32 @@ async function generateUserId(name: string, pluga: Pluga, team: Team): Promise<s
   
   // Create a more readable format: BHD-XXXX
   return `BHD-${hashHex.toUpperCase()}`;
+}
+
+async function generateUniqueUserId(name: string, pluga: Pluga, team: Team, db: RedisDatabase): Promise<string> {
+  let attempts = 0;
+  const maxAttempts = 10;
+  
+  while (attempts < maxAttempts) {
+    const userId = await generateUserId(name, pluga, team);
+    
+    // Check if this userId already exists
+    const registrations = await db.getRegistrations();
+    const existingUser = registrations.find(r => r.userId === userId);
+    
+    if (!existingUser) {
+      return userId;
+    }
+    
+    attempts++;
+    // Add a small delay to ensure different timestamps
+    await new Promise(resolve => setTimeout(resolve, 1));
+  }
+  
+  // If we still have duplicates after max attempts, add a random suffix
+  const baseUserId = await generateUserId(name, pluga, team);
+  const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `${baseUserId}-${randomSuffix}`;
 }
 
 class RedisDatabase implements IDatabase {
@@ -178,7 +205,7 @@ class RedisDatabase implements IDatabase {
     }
   }
 
-  async createChallenge(image: File, answers: string[]): Promise<Challenge> {
+  async createChallenge(image: File, answers: string[], question?: string): Promise<Challenge> {
     console.log('Creating challenge with answers:', answers);
     
     // Upload image to Vercel Blob Storage
@@ -194,6 +221,7 @@ class RedisDatabase implements IDatabase {
       id: crypto.randomUUID(),
       image: blob.url,
       answers: normalizedAnswers,
+      question,
       guesses: [],
       createdAt: new Date().toISOString()
     };
@@ -262,7 +290,7 @@ class RedisDatabase implements IDatabase {
     if (hasGuessed) {
       return {
         isCorrect: false,
-        message: "כבר ניחשת לאתגר זה",
+        message: "כבר ניחשת היום",
         alreadyGuessed: true
       };
     }
@@ -439,7 +467,7 @@ class RedisDatabase implements IDatabase {
       throw new Error("משתמש זה כבר קיים");
     }
 
-    const userId = await generateUserId(name, pluga, team);
+    const userId = await generateUniqueUserId(name, pluga, team, this);
     console.log('Generated userId:', userId);
 
     const registration: Registration = {

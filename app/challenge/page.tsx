@@ -32,7 +32,7 @@ export default function Challenge() {
   }>({ overall: [], byPluga: {}, byTeam: {} });
   const [hasGuessed, setHasGuessed] = useState(false);
   const [error, setError] = useState("");
-  const [challenge, setChallenge] = useState<{ image: string } | null>(null);
+  const [challenge, setChallenge] = useState<{ image: string; question?: string } | null>(null);
   
   useEffect(() => {
     const savedUserId = localStorage.getItem("userId");
@@ -222,7 +222,7 @@ export default function Challenge() {
                       <CardHeader className="border-b border-border p-4 [.border-b]:pb-4">
                         <CardTitle>החידון היומי</CardTitle>
                         <CardDescription>
-                          שימו לב! יש להכניס את הניחוש במדויק - ללא שגיאות כתיב
+                          {challenge?.question || "שימו לב! יש להכניס את הניחוש במדויק - ללא שגיאות כתיב"}
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="p-4 flex justify-center">
