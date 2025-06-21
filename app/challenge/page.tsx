@@ -14,7 +14,24 @@ import { SparklesText } from "@/components/magicui/sparkles-text";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Leaderboard } from "@/components/leaderboard";
+import { HistoryCard } from "@/components/history-card";
 import { Button } from '@/components/ui/button';
+
+interface Challenge {
+  id: string;
+  image: string;
+  answers?: string[];
+  answer?: string;
+  question?: string;
+  guesses: {
+    userId: string;
+    name: string;
+    guess: string;
+    timestamp: string;
+    isCorrect: boolean;
+  }[];
+  createdAt: string;
+}
 
 export default function Challenge() {
   const { theme } = useTheme();
@@ -30,6 +47,7 @@ export default function Challenge() {
     byPluga: { [key: string]: { correctGuesses: number; totalGuesses: number; users: number } };
     byTeam: { [key: string]: { correctGuesses: number; totalGuesses: number; users: number } };
   }>({ overall: [], byPluga: {}, byTeam: {} });
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [hasGuessed, setHasGuessed] = useState(false);
   const [error, setError] = useState("");
   const [challenge, setChallenge] = useState<{ image: string; question?: string } | null>(null);
@@ -43,6 +61,7 @@ export default function Challenge() {
     setUserId(savedUserId);
     fetchUserData(savedUserId);
     fetchChallenge();
+    fetchChallenges();
   }, [router]);
 
   const fetchUserData = async (userId: string) => {
@@ -100,6 +119,27 @@ export default function Challenge() {
       setChallenge(null);
     } finally {
       setIsInitialLoading(false);
+    }
+  };
+
+  const fetchChallenges = async () => {
+    try {
+      const response = await fetch("/api/challenges");
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch challenges");
+      }
+      
+      const data = await response.json();
+      
+      if (data.error) {
+        console.error('Error fetching challenges:', data.error);
+        return;
+      }
+
+      setChallenges(data.challenges || []);
+    } catch (error) {
+      console.error("Error fetching challenges:", error);
     }
   };
 
@@ -212,8 +252,8 @@ export default function Challenge() {
                   </SparklesText>
                 </div>
               )}
-              <div className="relative flex flex-col md:flex-row gap-10 md:gap-20 justify-center w-full max-w-[1200px]">
-                <div className="md:w-[400px] flex-shrink-0 relative">
+              <div className="relative flex flex-col lg:flex-row gap-10 lg:gap-20 justify-center w-full max-w-[1400px]">
+                <div className="lg:w-[400px] flex-shrink-0 relative">
                   <Card className="p-0 w-full text-center shadow-none border-none sticky top-0">
                     <MagicCard
                       gradientColor={theme === "dark" ? "#262626" : "#D9D9D955"}
@@ -274,8 +314,11 @@ export default function Challenge() {
                     </MagicCard>
                   </Card>
                 </div>
-                <div className="md:w-[400px] flex-shrink-0">
+                <div className="lg:w-[400px] flex-shrink-0">
                   <Leaderboard data={leaderboard} />
+                </div>
+                <div className="lg:w-[400px] flex-shrink-0">
+                  <HistoryCard challenges={challenges} />
                 </div>
               </div>
             </>

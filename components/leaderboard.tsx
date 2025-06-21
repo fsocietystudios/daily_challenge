@@ -100,7 +100,7 @@ export function Leaderboard({ data }: LeaderboardProps) {
   );
 
   return (
-    <Card className="mb-32 p-0 w-full md:w-[400px] text-center shadow-none border-none">
+    <Card className="p-0 w-full md:w-[400px] text-center shadow-none border-none">
       <MagicCard
         gradientColor={theme === "dark" ? "#262626" : "#D9D9D955"}
         className="p-0"
