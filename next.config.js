@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   env: {
-    KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
-    KV_REST_API_URL: process.env.KV_REST_API_URL,
+    STORAGE_KV_REST_API_TOKEN: process.env.STORAGE_KV_REST_API_TOKEN,
+    STORAGE_KV_REST_API_URL: process.env.STORAGE_KV_REST_API_URL,
     JWT_SECRET: process.env.JWT_SECRET,
   },
   typescript: {
