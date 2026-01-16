@@ -102,13 +102,13 @@ class RedisDatabase implements IDatabase {
   constructor() {
     console.log('Initializing RedisDatabase...');
     
-    if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+    if (!process.env.STORAGE_KV_REST_API_URL || !process.env.STORAGE_KV_REST_API_TOKEN) {
       throw new Error('Redis credentials are not set');
     }
 
     this.redis = new Redis({
-      url: process.env.KV_REST_API_URL,
-      token: process.env.KV_REST_API_TOKEN,
+      url: process.env.STORAGE_KV_REST_API_URL,
+      token: process.env.STORAGE_KV_REST_API_TOKEN,
     });
   }
 
